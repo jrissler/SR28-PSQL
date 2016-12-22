@@ -14,6 +14,7 @@ psql -h localhost -d userstoreis -U admin -p 5432 -a -q -f /home/jobs/Desktop/re
 
 # What I did different
 - Renamed table names to fit an elixir model
+- Updating import files location relative to my project
 
 # TODO
 - Add indexes etc
