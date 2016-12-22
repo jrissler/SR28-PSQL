@@ -99,8 +99,8 @@ CREATE TABLE nut_datas
   num_data_pts numeric(5,0) NOT NULL,--N 5.0 N Number of data points is the number of analyses used to calculate the nutrient value. If the number of data points is 0, the value was calculated or imputed.
   std_error numeric(11,3), -- Y Standard error of the mean. Null if cannot be calculated. The standard error is also not given if the number of data points is less than three.
   src_cd char(2) REFERENCES src_cds, -- N Code indicating type of data.
-  deriv_cd char(4) REFERENCES deriv_cds, --A 4 Y Data Derivation Code giving specific information on how the value is determined.  This field is populated only for items added or updated starting with SR14.  This field may not be populated if older records were used in the calculation of the mean value.
-  ref_ndb_no char(5) REFERENCES food_descs, -- Y NDB number of the item used to calculate a missing value. Populated only for items added or updated starting with SR14.
+  deriv_cd char(4), --REFERENCES deriv_cds, (only populated since 14 - would need to update import here to add NULL (strict PG!)) --A 4 Y Data Derivation Code giving specific information on how the value is determined.  This field is populated only for items added or updated starting with SR14.  This field may not be populated if older records were used in the calculation of the mean value.
+  ref_ndb_no char(5), -- REFERENCES food_descs, , (only populated since 14 - would need to update import here to add NULL (strict PG!)) -- Y NDB number of the item used to calculate a missing value. Populated only for items added or updated starting with SR14.
   add_nutr_mark char(1), -- Y Indicates a vitamin or mineral added for fortification or enrichment. This field is populated for ready-toeat breakfast cereals and many brand-name hot cereals in food group 08.
   num_studies int, --N 2 Y Number of studies.
   min numeric(13,3), -- Y Minimum value.
@@ -120,7 +120,7 @@ CREATE TABLE footnotes
   ndb_no char(5) NOT NULL REFERENCES food_descs,-- N 5-digit Nutrient Databank number that uniquely identifies a food item.  If this field is defined as numeric, the leading zero will be lost.
   footnt_no char(4) NOT NULL, -- 4 N Sequence number. If a given footnote applies to more than one nutrient number, the same footnote number is used. As a result, this file cannot be indexed and there is no primary key.
   footnt_typ char(1) NOT NULL, -- N Type of footnote: D = footnote adding information to the food description;  M = footnote adding information to measure description;  N = footnote providing additional information on a nutrient value. If the Footnt_typ = N, the Nutr_No will also be filled in.
-  nutr_no char(3) REFERENCES nutr_def, -- Y Unique 3-digit identifier code for a nutrient to which footnote applies.
+  nutr_no char(3) REFERENCES nutr_defs, -- Y Unique 3-digit identifier code for a nutrient to which footnote applies.
   footnt_txt varchar(200) NOT NULL -- N Footnote text.
 );
 COPY footnotes FROM '/Users/jamesrissler/code/SR28-PSQL/FOOTNOTE.txt' QUOTE '~' DELIMITER '^' CSV ENCODING 'LATIN1';
