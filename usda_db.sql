@@ -120,8 +120,9 @@ CREATE TABLE footnotes
   ndb_no char(5) NOT NULL REFERENCES food_descs,-- N 5-digit Nutrient Databank number that uniquely identifies a food item.  If this field is defined as numeric, the leading zero will be lost.
   footnt_no char(4) NOT NULL, -- 4 N Sequence number. If a given footnote applies to more than one nutrient number, the same footnote number is used. As a result, this file cannot be indexed and there is no primary key.
   footnt_typ char(1) NOT NULL, -- N Type of footnote: D = footnote adding information to the food description;  M = footnote adding information to measure description;  N = footnote providing additional information on a nutrient value. If the Footnt_typ = N, the Nutr_No will also be filled in.
-  nutr_no char(3) REFERENCES nutr_defs, -- Y Unique 3-digit identifier code for a nutrient to which footnote applies.
-  footnt_txt varchar(200) NOT NULL -- N Footnote text.
+  nutr_no char(3), -- REFERENCES nutr_defs (postgres strict - would need data to be null), -- Y Unique 3-digit identifier code for a nutrient to which footnote applies.
+  footnt_txt varchar(200) NOT NULL-- N Footnote text.
+  -- PRIMARY KEY (ndb_no, footnt_no)
 );
 COPY footnotes FROM '/Users/jamesrissler/code/SR28-PSQL/FOOTNOTE.txt' QUOTE '~' DELIMITER '^' CSV ENCODING 'LATIN1';
 
