@@ -14,15 +14,16 @@ DROP TABLE IF EXISTS nutr_defs;
 
 CREATE TABLE fd_groups
 (
-  fdgrp_cd char(4) PRIMARY KEY,
+  fdgrp_cd char(4) NOT NULL,
   fdgrp_desc varchar(60) NOT NULL
 );
 COPY fd_groups FROM '/Users/jamesrissler/code/SR28-PSQL/FD_GROUP.txt' QUOTE '~' DELIMITER '^' CSV ENCODING 'LATIN1';
+ALTER TABLE fd_groups ADD COLUMN id SERIAL PRIMARY KEY;
 --------------------------------------------------------
 CREATE TABLE food_descs
 (
-  ndb_no char(5) PRIMARY KEY,
-  fdgrp_cd char(4) NOT NULL REFERENCES fd_groups,
+  ndb_no char(5) NOT NULL,
+  fdgrp_cd char(4) NOT NULL,
   long_desc varchar(200) NOT NULL,
   shrt_desc varchar(60) NOT NULL,
   comname varchar(100),
@@ -37,52 +38,56 @@ CREATE TABLE food_descs
   cho_factor numeric(6,2)
 );
 COPY food_descs FROM '/Users/jamesrissler/code/SR28-PSQL/FOOD_DES.txt' QUOTE '~' DELIMITER '^' CSV ENCODING 'LATIN1';
+ALTER TABLE food_descs ADD COLUMN id SERIAL PRIMARY KEY;
 ----------------------------------------------------------
 CREATE TABLE langdescs
 (
-  factor_code char(5) PRIMARY KEY,
+  factor_code char(5) NOT NULL,
   description varchar(140) NOT NULL
 );
 COPY langdescs FROM '/Users/jamesrissler/code/SR28-PSQL/LANGDESC.txt' QUOTE '~' DELIMITER '^' CSV ENCODING 'LATIN1';
+ALTER TABLE langdescs ADD COLUMN id SERIAL PRIMARY KEY;
 
 CREATE TABLE src_cds
 (
-  src_cd char(2) PRIMARY KEY,
+  src_cd char(2) NOT NULL,
   srccd_desc varchar(60) NOT NULL
 );
 COPY src_cds FROM '/Users/jamesrissler/code/SR28-PSQL/SRC_CD.txt' QUOTE '~' DELIMITER '^' CSV ENCODING 'LATIN1';
+ALTER TABLE src_cds ADD COLUMN id SERIAL PRIMARY KEY;
 
 CREATE TABLE deriv_cds
 (
-  deriv_cd char(4) PRIMARY KEY,
+  deriv_cd char(4) NOT NULL,
   deriv_desc varchar(120) NOT NULL
 );
 COPY deriv_cds FROM '/Users/jamesrissler/code/SR28-PSQL/DERIV_CD.txt' QUOTE '~' DELIMITER '^' CSV ENCODING 'LATIN1';
+ALTER TABLE deriv_cds ADD COLUMN id SERIAL PRIMARY KEY;
 
 CREATE TABLE weights
 (
-  ndb_no char(5) NOT NULL REFERENCES food_descs,--A 5* N 5-digit Nutrient Databank number that uniquely identifies a food item.  If this field is defined as numeric, the leading zero will be lost.
+  ndb_no char(5) NOT NULL,-- REFERENCES food_descs,--A 5* N 5-digit Nutrient Databank number that uniquely identifies a food item.  If this field is defined as numeric, the leading zero will be lost.
   seq char(2) NOT NULL, --A 2* N Sequence number.
   amount numeric(8,3) NOT NULL, -- N Unit modifier (for example, 1 in “1 cup”).
   msre_desc varchar(84) NOT NULL, -- N Description (for example, cup, diced, and 1-inch pieces).
   gm_wgt numeric(8,1) NOT NULL, -- N Gram weight.
   num_data_pts int, --N 3 Y Number of data points.
-  std_dev numeric(10,3), -- Y Standard deviation
-  PRIMARY KEY (ndb_no, seq)
+  std_dev numeric(10,3) -- Y Standard deviation
 );
 COPY weights FROM '/Users/jamesrissler/code/SR28-PSQL/WEIGHT.txt' QUOTE '~' DELIMITER '^' CSV ENCODING 'LATIN1';
+ALTER TABLE weights ADD COLUMN id SERIAL PRIMARY KEY;
 
 CREATE TABLE languals
 (
-  ndb_no char(5) NOT NULL REFERENCES food_descs,
-  factor_code char(5) NOT NULL REFERENCES langdescs,
-  primary key (ndb_no, factor_code)
+  ndb_no char(5) NOT NULL,
+  factor_code char(5) NOT NULL
 );
 COPY languals FROM '/Users/jamesrissler/code/SR28-PSQL/LANGUAL.txt' QUOTE '~' DELIMITER '^' CSV ENCODING 'LATIN1';
+ALTER TABLE languals ADD COLUMN id SERIAL PRIMARY KEY;
 
 CREATE TABLE nutr_defs
 (
-  nutr_no char(4) PRIMARY KEY, --Unique 3-digit identifier code for a nutrient.
+  nutr_no char(4) NOT NULL, --Unique 3-digit identifier code for a nutrient.
   units varchar(7) NOT NULL, -- N Units of measure (mg, g, μg, and so on).
   tagname varchar(20), -- Y International Network of Food Data Systems (INFOODS) Tagnames.† A unique abbreviation for a nutrient/food component developed by INFOODS to aid in the interchange of data.
   nutrDesc varchar(60) NOT NULL,-- N Name of nutrient/food component.
@@ -90,15 +95,16 @@ CREATE TABLE nutr_defs
   sr_order int NOT NULL
 );
 COPY nutr_defs FROM '/Users/jamesrissler/code/SR28-PSQL/NUTR_DEF.txt' QUOTE '~' DELIMITER '^' CSV ENCODING 'LATIN1';
+ALTER TABLE nutr_defs ADD COLUMN id SERIAL PRIMARY KEY;
 
 CREATE TABLE nut_datas
 (
-  ndb_no char(5) NOT NULL REFERENCES food_descs, --* N 5-digit Nutrient Databank number that uniquely identifies a food item.  If this field is defined as numeric, the leading zero will be lost.
-  nutr_no char(3) NOT NULL REFERENCES nutr_defs, -- 3* N Unique 3-digit identifier code for a nutrient.
+  ndb_no char(5) NOT NULL, --* N 5-digit Nutrient Databank number that uniquely identifies a food item.  If this field is defined as numeric, the leading zero will be lost.
+  nutr_no char(3) NOT NULL, -- 3* N Unique 3-digit identifier code for a nutrient.
   nutr_val numeric(13,3) NOT NULL, -- N Amount in 100 grams, edible portion †.
   num_data_pts numeric(5,0) NOT NULL,--N 5.0 N Number of data points is the number of analyses used to calculate the nutrient value. If the number of data points is 0, the value was calculated or imputed.
   std_error numeric(11,3), -- Y Standard error of the mean. Null if cannot be calculated. The standard error is also not given if the number of data points is less than three.
-  src_cd char(2) REFERENCES src_cds, -- N Code indicating type of data.
+  src_cd char(2) NOT NULL, -- N Code indicating type of data.
   deriv_cd char(4), --REFERENCES deriv_cds, (only populated since 14 - would need to update import here to add NULL (strict PG!)) --A 4 Y Data Derivation Code giving specific information on how the value is determined.  This field is populated only for items added or updated starting with SR14.  This field may not be populated if older records were used in the calculation of the mean value.
   ref_ndb_no char(5), -- REFERENCES food_descs, , (only populated since 14 - would need to update import here to add NULL (strict PG!)) -- Y NDB number of the item used to calculate a missing value. Populated only for items added or updated starting with SR14.
   add_nutr_mark char(1), -- Y Indicates a vitamin or mineral added for fortification or enrichment. This field is populated for ready-toeat breakfast cereals and many brand-name hot cereals in food group 08.
@@ -110,25 +116,26 @@ CREATE TABLE nut_datas
   up_eb numeric(13,3), -- Y Upper 95% error bound.
   stat_cmt varchar(10), -- Y Statistical comments. See definitions below.
   addmod_date varchar(10), -- Y Indicates when a value was either added to the database or last modified.
-  cc char(1), -- Y Confidence Code indicating data quality, based on evaluation of sample plan, sample handling, analytical method, analytical quality control, and number of samples analyzed. Not included in this release, but is planned for future releases.
-  PRIMARY KEY (ndb_no, nutr_no)
+  cc char(1) -- Y Confidence Code indicating data quality, based on evaluation of sample plan, sample handling, analytical method, analytical quality control, and number of samples analyzed. Not included in this release, but is planned for future releases.
 );
 COPY nut_datas FROM '/Users/jamesrissler/code/SR28-PSQL/NUT_DATA.txt' QUOTE '~' DELIMITER '^' CSV ENCODING 'LATIN1';
+ALTER TABLE nut_datas ADD COLUMN id SERIAL PRIMARY KEY;
 
 CREATE TABLE footnotes
 (
-  ndb_no char(5) NOT NULL REFERENCES food_descs,-- N 5-digit Nutrient Databank number that uniquely identifies a food item.  If this field is defined as numeric, the leading zero will be lost.
+  ndb_no char(5) NOT NULL,-- N 5-digit Nutrient Databank number that uniquely identifies a food item.  If this field is defined as numeric, the leading zero will be lost.
   footnt_no char(4) NOT NULL, -- 4 N Sequence number. If a given footnote applies to more than one nutrient number, the same footnote number is used. As a result, this file cannot be indexed and there is no primary key.
   footnt_typ char(1) NOT NULL, -- N Type of footnote: D = footnote adding information to the food description;  M = footnote adding information to measure description;  N = footnote providing additional information on a nutrient value. If the Footnt_typ = N, the Nutr_No will also be filled in.
   nutr_no char(3), -- REFERENCES nutr_defs (postgres strict - would need data to be null), -- Y Unique 3-digit identifier code for a nutrient to which footnote applies.
-  footnt_txt varchar(200) NOT NULL-- N Footnote text.
+  footnt_txt varchar(200) NOT NULL--, N Footnote text.
   -- PRIMARY KEY (ndb_no, footnt_no)
 );
 COPY footnotes FROM '/Users/jamesrissler/code/SR28-PSQL/FOOTNOTE.txt' QUOTE '~' DELIMITER '^' CSV ENCODING 'LATIN1';
+ALTER TABLE footnotes ADD COLUMN id SERIAL PRIMARY KEY;
 
 CREATE TABLE data_srcs
 (
-  datasrc_id char(6) PRIMARY KEY, --* N Unique ID identifying the reference/source.
+  datasrc_id char(6) NOT NULL, --* N Unique ID identifying the reference/source.
   authors varchar(255), -- Y List of authors for a journal article or name of sponsoring organization for other documents.
   title varchar(255) NOT NULL,-- N Title of article or name of document, such as a report from a company or trade association.
   year char(4), -- Y Year article or document was published.
@@ -139,12 +146,13 @@ CREATE TABLE data_srcs
   end_page varchar(5) --Y Ending page number of article/document.
 );
 COPY data_srcs FROM '/Users/jamesrissler/code/SR28-PSQL/DATA_SRC.txt' QUOTE '~' DELIMITER '^' CSV ENCODING 'LATIN1';
+ALTER TABLE data_srcs ADD COLUMN id SERIAL PRIMARY KEY;
 
 CREATE TABLE datsrclns
 (
-  ndb_no char(5) NOT NULL REFERENCES food_descs,--A 5* N 5-digit Nutrient Databank number that uniquely identifies a food item.  If this field is defined as numeric, the leading zero will be lost.
-  nutr_no char(3) NOT NULL REFERENCES nutr_defs, --A 3* N Unique 3-digit identifier code for a nutrient.
-  datasrc_id char(6) NOT NULL REFERENCES data_srcs, --A 6* N Unique ID identifying the reference/source.
-  PRIMARY KEY (ndb_no, nutr_no, datasrc_id)
+  ndb_no char(5) NOT NULL,--A 5* N 5-digit Nutrient Databank number that uniquely identifies a food item.  If this field is defined as numeric, the leading zero will be lost.
+  nutr_no char(3) NOT NULL, --A 3* N Unique 3-digit identifier code for a nutrient.
+  datasrc_id char(6) NOT NULL --A 6* N Unique ID identifying the reference/source.
 );
 COPY datsrclns FROM '/Users/jamesrissler/code/SR28-PSQL/DATSRCLN.txt' QUOTE '~' DELIMITER '^' CSV ENCODING 'LATIN1';
+ALTER TABLE datsrclns ADD COLUMN id SERIAL PRIMARY KEY;
